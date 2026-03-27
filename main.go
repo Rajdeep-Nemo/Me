@@ -1,10 +1,9 @@
 package main
 
 import (
-	//"Me/tokens"
+	"Me/lexer"
 	"fmt"
 	"os"
-	//"strings"
 )
 
 func main() {
@@ -20,8 +19,9 @@ func main() {
 	}
 	data, err := os.ReadFile(os.Args[1])
 	if err != nil {
-		fmt.Println("Error:",err)
+		fmt.Println("Error:", err)
 		return
 	}
-	
+	source := string(data)
+	s := lexer.InitScanner(source)
 }

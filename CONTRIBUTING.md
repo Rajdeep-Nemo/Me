@@ -4,7 +4,7 @@ Thanks for taking the time to contribute.
 
 ## Workflow
 
-* Fork → branch → commit → pull request
+* Clone → branch → commit → pull request
 * Keep changes small and focused
 
 ## PR Rules
@@ -40,7 +40,7 @@ Thanks for taking the time to contribute.
 
 ## Contributors
 
-Add yourself to CONTRIBUTORS.md
+Add yourself to [CONTRIBUTORS.md](CONTRIBUTORS.md)
 
 ## Notes
 

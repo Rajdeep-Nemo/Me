@@ -2,9 +2,10 @@ package parser
 
 import (
 	"fmt"
-	"glaze/internal/ast"
-	"glaze/internal/token"
 	"strconv"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/ast"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 )
 
 // Parser struct to hold the tokens and current position
@@ -342,13 +343,6 @@ var precedences = map[token.TokenType]Precedence{
 
 func (p *Parser) currentPrecedence() Precedence {
 	if pr, ok := precedences[p.currentToken().Type]; ok {
-		return pr
-	}
-	return LOWEST
-}
-
-func (p *Parser) peekPrecedence() Precedence {
-	if pr, ok := precedences[p.peekToken().Type]; ok {
 		return pr
 	}
 	return LOWEST

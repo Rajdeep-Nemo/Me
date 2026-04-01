@@ -2,7 +2,8 @@ package evaluator
 
 import (
 	"fmt"
-	"glaze/internal/object"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
 )
 
 // builtins is the central registry of all native functions.

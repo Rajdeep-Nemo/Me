@@ -1,9 +1,10 @@
 package parser
 
 import (
-	"glaze/internal/ast"
-	"glaze/internal/token"
 	"testing"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/ast"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 )
 
 // ============================================================

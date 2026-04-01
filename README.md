@@ -1,6 +1,6 @@
-# Pluesi
+# Sugarglaze
 
-Pluesi is a custom programming language interpreter implemented in Go.
+Sugarglaze is a custom programming language interpreter implemented in Go.
 
 ---
 

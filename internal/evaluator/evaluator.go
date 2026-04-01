@@ -2,9 +2,10 @@ package evaluator
 
 import (
 	"fmt"
-	"glaze/internal/ast"
-	"glaze/internal/object"
 	"math"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/ast"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
 )
 
 // Recursively traverses and evaluates an Abstract Syntax Tree (AST) node into a runtime object

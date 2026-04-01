@@ -1,8 +1,9 @@
 package lexer
 
 import (
-	"glaze/internal/token"
 	"unicode"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 )
 
 // Keywords map

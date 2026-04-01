@@ -2,11 +2,12 @@ package evaluator
 
 import (
 	"fmt"
-	"glaze/internal/lexer"
-	"glaze/internal/object"
-	"glaze/internal/parser"
-	"glaze/internal/token"
 	"testing"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/lexer"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/parser"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {

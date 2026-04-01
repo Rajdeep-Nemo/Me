@@ -2,8 +2,9 @@ package evaluator
 
 import (
 	"fmt"
-	"glaze/internal/object"
 	"strings"
+
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
 )
 
 // Handles the string formatting, interpolation, and strict type checking.

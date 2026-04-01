@@ -29,6 +29,7 @@ const (
 	MATCH
 	TRUE
 	FALSE
+	IMPORT
 	// 4. Type keywords
 	I8
 	I16
@@ -85,7 +86,6 @@ const (
 	CLOSE_BRACKET
 	COMMA
 	DOT
-	SEMICOLON
 	QUESTION
 	COLON
 	DOT_DOT

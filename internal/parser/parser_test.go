@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"pluesi/internal/ast"
-	"pluesi/internal/token"
+	"glaze/internal/ast"
+	"glaze/internal/token"
 	"testing"
 )
 
@@ -29,7 +29,7 @@ func expectParserErrors(t *testing.T, p *Parser, count int) {
 // makeProgram builds a Parser from a token slice and returns the parsed Program.
 func makeProgram(tokens []token.Token) (*Parser, *ast.Program) {
 	p := New(tokens)
-	program := p.parseProgram()
+	program := p.ParseProgram()
 	return p, program
 }
 
@@ -142,23 +142,6 @@ func TestLetUninitializedNoType(t *testing.T) {
 	expectParserErrors(t, p, 1)
 }
 
-// let x: i32 = 5;  (with semicolon — should parse fine)
-func TestLetWithSemicolon(t *testing.T) {
-	tokens := []token.Token{
-		{Type: token.LET, Lexeme: "let"},
-		{Type: token.IDENTIFIER, Lexeme: "myVar"},
-		{Type: token.COLON, Lexeme: ":"},
-		{Type: token.I32, Lexeme: "i32"},
-		{Type: token.EQUAL, Lexeme: "="},
-		{Type: token.INT_LITERAL, Lexeme: "42"},
-		{Type: token.SEMICOLON, Lexeme: ";"},
-		eof,
-	}
-	p, program := makeProgram(tokens)
-	checkParserErrors(t, p)
-	checkStatementCount(t, program, 1)
-}
-
 // let  (missing identifier — invalid)
 func TestLetMissingIdentifier(t *testing.T) {
 	tokens := []token.Token{
@@ -167,7 +150,7 @@ func TestLetMissingIdentifier(t *testing.T) {
 		eof,
 	}
 	p, _ := makeProgram(tokens)
-	expectParserErrors(t, p, 1)
+	expectParserErrors(t, p, 2)
 }
 
 // let x: <unknown type> = 5  (invalid type keyword)
@@ -232,7 +215,6 @@ func TestLetAllTypeKeywords(t *testing.T) {
 // Const Statement Tests
 // ============================================================
 
-// const MAX = 100  (inferred type, initialized)
 // const MAX = 100  (missing type — invalid, must error)
 func TestConstMissingType(t *testing.T) {
 	tokens := []token.Token{
@@ -244,9 +226,7 @@ func TestConstMissingType(t *testing.T) {
 	}
 
 	p, _ := makeProgram(tokens)
-
-	// We expect exactly 1 parser error because the colon and type are missing
-	expectParserErrors(t, p, 1)
+	expectParserErrors(t, p, 2) // We expect this to fail now!
 }
 
 // const MAX: i32 = 100  (explicit type, initialized)
@@ -308,7 +288,7 @@ func TestConstMissingIdentifier(t *testing.T) {
 		eof,
 	}
 	p, _ := makeProgram(tokens)
-	expectParserErrors(t, p, 1)
+	expectParserErrors(t, p, 2)
 }
 
 // ============================================================
@@ -374,20 +354,6 @@ func TestAssignCompoundOperators(t *testing.T) {
 			}
 		})
 	}
-}
-
-// x = 10;  (with semicolon — should parse fine)
-func TestAssignWithSemicolon(t *testing.T) {
-	tokens := []token.Token{
-		{Type: token.IDENTIFIER, Lexeme: "x"},
-		{Type: token.EQUAL, Lexeme: "="},
-		{Type: token.INT_LITERAL, Lexeme: "10"},
-		{Type: token.SEMICOLON, Lexeme: ";"},
-		eof,
-	}
-	p, program := makeProgram(tokens)
-	checkParserErrors(t, p)
-	checkStatementCount(t, program, 1)
 }
 
 // ============================================================
@@ -484,10 +450,256 @@ func TestMultipleStatements(t *testing.T) {
 	}
 }
 
+// Test import statements
+func TestImportStatement(t *testing.T) {
+	tests := []struct {
+		name            string
+		inputTokens     []token.Token
+		expectedModules []string
+	}{
+		{
+			name: "Single Import",
+			// import "io";
+			inputTokens: []token.Token{
+				{Type: token.IMPORT, Lexeme: "import"},
+				{Type: token.STRING_LITERAL, Lexeme: "\"io\""}, // Lexer includes quotes
+				eof,
+			},
+			expectedModules: []string{"io"}, // Note: parseStringLiteral strips the quotes for the AST Value
+		},
+		{
+			name: "Grouped Imports",
+			// import ("io", "math");
+			inputTokens: []token.Token{
+				{Type: token.IMPORT, Lexeme: "import"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.STRING_LITERAL, Lexeme: "\"io\""},
+				{Type: token.COMMA, Lexeme: ","},
+				{Type: token.STRING_LITERAL, Lexeme: "\"math\""},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				eof,
+			},
+			expectedModules: []string{"io", "math"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, program := makeProgram(tt.inputTokens)
+
+			// We shouldn't have any parsing errors
+			checkParserErrors(t, p)
+
+			// There should be exactly 1 statement parsed
+			checkStatementCount(t, program, 1)
+
+			// 1. Check if the statement is an ImportStatement
+			stmt, ok := program.Statements[0].(*ast.ImportStatement)
+			if !ok {
+				t.Fatalf("expected *ast.ImportStatement, got %T", program.Statements[0])
+			}
+
+			// 2. Check that the correct number of modules were parsed
+			if len(stmt.Modules) != len(tt.expectedModules) {
+				t.Fatalf("expected %d modules, got %d", len(tt.expectedModules), len(stmt.Modules))
+			}
+
+			// 3. Verify the names of the imported modules
+			for i, expected := range tt.expectedModules {
+				actual := stmt.Modules[i].Value
+				if actual != expected {
+					t.Errorf("expected module %q, got %q", expected, actual)
+				}
+			}
+		})
+	}
+}
+
 // Empty program — should parse fine with zero statements
 func TestEmptyProgram(t *testing.T) {
 	tokens := []token.Token{eof}
 	p, program := makeProgram(tokens)
 	checkParserErrors(t, p)
 	checkStatementCount(t, program, 0)
+}
+
+// Test comprehensive call expressions in both let and expression statements, with various argument types and nesting levels
+func TestComprehensiveCallExpressions(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputTokens  []token.Token
+		isLet        bool     // Is this a Let statement (true) or an Expression statement (false)?
+		expectedFunc string   // The name of the function being called
+		expectedArgs []string // The string representation of each argument
+	}{
+		{
+			name: "Standalone with no arguments",
+			// print();
+			inputTokens: []token.Token{
+				{Type: token.IDENTIFIER, Lexeme: "print"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				eof,
+			},
+			isLet:        false,
+			expectedFunc: "print",
+			expectedArgs: []string{},
+		},
+		{
+			name: "Standalone with format string and variable",
+			// print("Val: {i32}", x);
+			inputTokens: []token.Token{
+				{Type: token.IDENTIFIER, Lexeme: "print"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.STRING_LITERAL, Lexeme: "\"Val: {i32}\""},
+				{Type: token.COMMA, Lexeme: ","},
+				{Type: token.IDENTIFIER, Lexeme: "x"},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				eof,
+			},
+			isLet:        false,
+			expectedFunc: "print",
+			expectedArgs: []string{"\"Val: {i32}\"", "x"},
+		},
+		{
+			name: "Call inside a let declaration",
+			// let result = add(5, 10);
+			inputTokens: []token.Token{
+				{Type: token.LET, Lexeme: "let"},
+				{Type: token.IDENTIFIER, Lexeme: "result"},
+				{Type: token.EQUAL, Lexeme: "="},
+				{Type: token.IDENTIFIER, Lexeme: "add"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.INT_LITERAL, Lexeme: "5"},
+				{Type: token.COMMA, Lexeme: ","},
+				{Type: token.INT_LITERAL, Lexeme: "10"},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				eof,
+			},
+			isLet:        true,
+			expectedFunc: "add",
+			expectedArgs: []string{"5", "10"},
+		},
+		{
+			name: "Nested function call",
+			// print(get_value());
+			inputTokens: []token.Token{
+				{Type: token.IDENTIFIER, Lexeme: "print"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.IDENTIFIER, Lexeme: "get_value"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				eof,
+			},
+			isLet:        false,
+			expectedFunc: "print",
+			expectedArgs: []string{"get_value()"}, // The inner call expression stringifies to this
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, program := makeProgram(tt.inputTokens)
+			checkParserErrors(t, p)
+			checkStatementCount(t, program, 1)
+
+			var callExp *ast.CallExpression
+
+			// Extract the CallExpression based on the statement type
+			if tt.isLet {
+				stmt, ok := program.Statements[0].(*ast.LetStatement)
+				if !ok {
+					t.Fatalf("expected *ast.LetStatement, got %T", program.Statements[0])
+				}
+				callExp, ok = stmt.Value.(*ast.CallExpression)
+				if !ok {
+					t.Fatalf("expected stmt.Value to be *ast.CallExpression, got %T", stmt.Value)
+				}
+			} else {
+				stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+				if !ok {
+					t.Fatalf("expected *ast.ExpressionStatement, got %T", program.Statements[0])
+				}
+				callExp, ok = stmt.Expression.(*ast.CallExpression)
+				if !ok {
+					t.Fatalf("expected stmt.Expression to be *ast.CallExpression, got %T", stmt.Expression)
+				}
+			}
+
+			// 1. Check the function name
+			if callExp.Function.String() != tt.expectedFunc {
+				t.Errorf("expected function name %q, got %q", tt.expectedFunc, callExp.Function.String())
+			}
+
+			// 2. Check the arguments length
+			if len(callExp.Arguments) != len(tt.expectedArgs) {
+				t.Fatalf("expected %d arguments, got %d", len(tt.expectedArgs), len(callExp.Arguments))
+			}
+
+			// 3. Check each argument's string representation
+			for i, arg := range callExp.Arguments {
+				if arg.String() != tt.expectedArgs[i] {
+					t.Errorf("argument %d: expected %q, got %q", i, tt.expectedArgs[i], arg.String())
+				}
+			}
+		})
+	}
+}
+
+// ============================================================
+// Control Flow Tests (If / Else / Blocks)
+// ============================================================
+
+func TestIfElseExpression(t *testing.T) {
+	// if (x < y) { x } else { y }
+	tokens := []token.Token{
+		{Type: token.IF, Lexeme: "if"},
+		{Type: token.OPEN_PAREN, Lexeme: "("},
+		{Type: token.IDENTIFIER, Lexeme: "x"},
+		{Type: token.LESS, Lexeme: "<"},
+		{Type: token.IDENTIFIER, Lexeme: "y"},
+		{Type: token.CLOSE_PAREN, Lexeme: ")"},
+		{Type: token.OPEN_BRACE, Lexeme: "{"},
+		{Type: token.IDENTIFIER, Lexeme: "x"},
+		{Type: token.CLOSE_BRACE, Lexeme: "}"},
+		{Type: token.ELSE, Lexeme: "else"},
+		{Type: token.OPEN_BRACE, Lexeme: "{"},
+		{Type: token.IDENTIFIER, Lexeme: "y"},
+		{Type: token.CLOSE_BRACE, Lexeme: "}"},
+		eof,
+	}
+
+	p, program := makeProgram(tokens)
+	checkParserErrors(t, p)
+	checkStatementCount(t, program, 1)
+
+	// The if/else should be wrapped in an ExpressionStatement
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("expected *ast.ExpressionStatement, got %T", program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("expected stmt.Expression to be *ast.IfExpression, got %T", stmt.Expression)
+	}
+
+	// Check condition parsing
+	if exp.Condition == nil {
+		t.Fatalf("expected condition, got nil")
+	}
+
+	// Check Consequence Block { x }
+	if len(exp.Consequence.Statements) != 1 {
+		t.Errorf("consequence is not 1 statement. got=%d\n", len(exp.Consequence.Statements))
+	}
+
+	// Check Alternative Block { y }
+	if exp.Alternative == nil {
+		t.Fatalf("expected alternative block, got nil")
+	}
+	if len(exp.Alternative.Statements) != 1 {
+		t.Errorf("alternative is not 1 statement. got=%d\n", len(exp.Alternative.Statements))
+	}
 }

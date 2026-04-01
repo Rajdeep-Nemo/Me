@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"pluesi/internal/token"
+	"glaze/internal/token"
 	"unicode"
 )
 
@@ -22,6 +22,7 @@ var keywords = map[string]token.TokenType{
 	"match":    token.MATCH,
 	"true":     token.TRUE,
 	"false":    token.FALSE,
+	"import":   token.IMPORT,
 	// Type keywords
 	"i8":     token.I8,
 	"i16":    token.I16,
@@ -309,8 +310,6 @@ func (s *Scanner) ScanToken() token.Token {
 		return s.createToken(token.COMMA)
 	case ':':
 		return s.createToken(token.COLON)
-	case ';':
-		return s.createToken(token.SEMICOLON)
 	case '?':
 		return s.createToken(token.QUESTION)
 

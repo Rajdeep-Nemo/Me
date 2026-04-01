@@ -2,7 +2,8 @@ package ast
 
 import (
 	"bytes"
-	"pluesi/internal/token"
+	"glaze/internal/token"
+	"strings"
 )
 
 // Node is the base interface for all nodes in the tree
@@ -118,6 +119,36 @@ func (ls *ConstStatement) String() string {
 	return out.String()
 }
 
+// ImportStatement represents an import directive: import "io" or import ("io", "math")
+type ImportStatement struct {
+	Token   token.Token      // The 'import' token
+	Modules []*StringLiteral // List of module names to import
+}
+
+func (is *ImportStatement) statementNode()       {}
+func (is *ImportStatement) TokenLiteral() string { return is.Token.Lexeme }
+
+func (is *ImportStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString(is.TokenLiteral() + " ")
+
+	if len(is.Modules) > 1 {
+		out.WriteString("(")
+	}
+
+	var mods []string
+	for _, m := range is.Modules {
+		mods = append(mods, m.String())
+	}
+	out.WriteString(strings.Join(mods, ", "))
+
+	if len(is.Modules) > 1 {
+		out.WriteString(")")
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
 // Holds the operator for assignment statements like "=", "+=", etc.
 type AssignOperator string
 
@@ -147,6 +178,22 @@ func (as *AssignStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString(as.Target.String() + " " + string(as.Operator) + " " + as.Value.String())
 	return out.String()
+}
+
+// ExpressionStatement represents an expression standing alone on a line (e.g., a function call)
+type ExpressionStatement struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (es *ExpressionStatement) statementNode()       {}
+func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Lexeme }
+
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String() + ";"
+	}
+	return ""
 }
 
 // Literal nodes for different literal types
@@ -229,3 +276,64 @@ func (ie *InfixExpression) String() string {
 }
 func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Lexeme }
+
+type CallExpression struct {
+	Token     token.Token  // The '(' token
+	Function  Expression   // The function being called (could be an identifier or a more complex expression)
+	Arguments []Expression // The arguments passed to the function
+}
+
+func (ce *CallExpression) expressionNode()      {}
+func (ce *CallExpression) TokenLiteral() string { return ce.Token.Lexeme }
+func (ce *CallExpression) String() string {
+	var out bytes.Buffer
+	var args []string
+	for _, a := range ce.Arguments {
+		args = append(args, a.String())
+	}
+	out.WriteString(ce.Function.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(args, ", "))
+	out.WriteString(")")
+	return out.String()
+}
+
+// BlockStatement represents a sequence of statements enclosed in { }
+type BlockStatement struct {
+	Token      token.Token // the { token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode()       {}
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Lexeme }
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+	for _, s := range bs.Statements {
+		out.WriteString(s.String())
+	}
+	return out.String()
+}
+
+// IfExpression represents an if/else conditional
+type IfExpression struct {
+	Token       token.Token // The 'if' token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement // This can be nil if there is no 'else'
+}
+
+func (ie *IfExpression) expressionNode()      {}
+func (ie *IfExpression) TokenLiteral() string { return ie.Token.Lexeme }
+func (ie *IfExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("if")
+	out.WriteString(ie.Condition.String())
+	out.WriteString(" ")
+	out.WriteString(ie.Consequence.String())
+
+	if ie.Alternative != nil {
+		out.WriteString("else ")
+		out.WriteString(ie.Alternative.String())
+	}
+	return out.String()
+}

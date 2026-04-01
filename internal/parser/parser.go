@@ -149,14 +149,14 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 		stmt.TypeHint = p.parseTypeAnnotation()
 		if stmt.TypeHint == nil {
-			return nil 
+			return nil
 		}
 	}
 
 	// 3. Handle Initialization vs Uninitialized
 	if p.currentToken().Type == token.EQUAL {
 		p.advance() // Move past the '='
-		
+
 		// Parse the right side of the equals sign
 		stmt.Value = p.parseExpression(LOWEST)
 	} else {
@@ -203,8 +203,6 @@ func (p *Parser) parseConstStatement() ast.Statement {
 
 	return stmt
 }
-
-// Parses a const statement, which MUST include a type annotation and an initializer.
 
 // Parses an identifier (variable) in an expression
 func (p *Parser) parseIdentifier() ast.Expression {

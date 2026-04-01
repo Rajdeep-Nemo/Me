@@ -17,8 +17,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.IntegerLiteral:
-		if node.Value > math.MaxInt32 {
-			return &object.Int64{Value: int64(node.Value)}
+		if node.Value > math.MaxInt32+1 {
+			return newError("integer literal %d exceeds default i32 capacity. Use an explicit type hint (e.g., : i64)", node.Value)
 		}
 		return &object.Int32{Value: int32(node.Value)}
 	case *ast.FloatLiteral:
@@ -51,7 +51,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return evalInfixExpression(node.Operator, left, right)
 
-	// VARIABLES & IDENTIFIERS
 	case *ast.LetStatement:
 		var val object.Object
 		var expectedType string
@@ -66,10 +65,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 				return val
 			}
 			if expectedType != "" {
-				val = enforceType(val, expectedType)
-				if isError(val) {
-					return val
+				castedVal := enforceType(val, expectedType)
+				if isError(castedVal) {
+					return wrapTypeError(castedVal, val, node.Name.Value, expectedType)
 				}
+				val = castedVal
 			} else {
 				expectedType = string(val.Type())
 			}
@@ -85,16 +85,19 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
+
 		expectedType := ""
 		if node.TypeHint != nil {
 			expectedType = node.TypeHint.Name
-			val = enforceType(val, expectedType)
-			if isError(val) {
-				return val
+			castedVal := enforceType(val, expectedType)
+			if isError(castedVal) {
+				return wrapTypeError(castedVal, val, node.Name.Value, expectedType)
 			}
+			val = castedVal
 		} else {
 			expectedType = string(val.Type())
 		}
+
 		env.Define(node.Name.Value, val, true, expectedType, true)
 		return &object.Nil{}
 
@@ -104,17 +107,25 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return val
 		}
 
+		currentRecord, exists := env.Get(node.Target.Value)
+		if !exists {
+			return newError("cannot assign to undefined variable '%s'", node.Target.Value)
+		}
+
+		if currentRecord.Type != "" {
+			castedVal := enforceType(val, currentRecord.Type)
+			if isError(castedVal) {
+				return wrapTypeError(castedVal, val, node.Target.Value, currentRecord.Type)
+			}
+			val = castedVal
+		}
+
 		if node.Operator == ast.Assign {
 			result := env.Assign(node.Target.Value, val)
 			if isError(result) {
 				return result
 			}
 			return &object.Nil{}
-		}
-
-		currentRecord, exists := env.Get(node.Target.Value)
-		if !exists {
-			return newError("cannot assign to undefined variable '%s'", node.Target.Value)
 		}
 
 		var opStr string
@@ -265,10 +276,25 @@ func enforceType(obj object.Object, targetType string) object.Object {
 		case object.F64_OBJ:
 			return &object.Float64{Value: floatVal}
 		default:
-			return newError("implicit down-casting from float to int not allowed")
+			return newError("implicit downcasting from float to int not allowed")
 		}
 	}
 	return newError("type mismatch: cannot assign '%s' to '%s'", obj.Type(), targetType)
+}
+
+// Helper to inject variable context into generic type mismatch errors
+func wrapTypeError(errObj object.Object, val object.Object, varName, expectedType string) object.Object {
+	errStr := errObj.(*object.Error).Message
+
+	// If it's a structural type error, we wrap it with the variable name.
+	// (Note: We intentionally bypass bounds-checking errors like "value 300 out of bounds for i8")
+	if errStr == "implicit downcasting from float to int not allowed" ||
+		errStr == fmt.Sprintf("cannot cast %s to %s", val.Type(), expectedType) ||
+		errStr == fmt.Sprintf("type mismatch: cannot assign '%s' to '%s'", val.Type(), expectedType) {
+		return newError("type mismatch: cannot assign '%s' to variable '%s' (expected '%s')", val.Type(), varName, expectedType)
+	}
+
+	return errObj
 }
 
 // Evaluates a sequence of statements forming a program, bubbling up errors to halt execution
@@ -442,12 +468,22 @@ func evalIntMath(operator string, leftVal, rightVal int64, targetType object.Obj
 		return newError("unknown operator: %s %s %s", targetType, operator, targetType)
 	}
 
+	// FIX: Apply strict bounds checking to the calculated math result
 	switch targetType {
 	case object.I8_OBJ:
+		if result < math.MinInt8 || result > math.MaxInt8 {
+			return newError("value %d out of bounds for i8", result)
+		}
 		return &object.Int8{Value: int8(result)}
 	case object.I16_OBJ:
+		if result < math.MinInt16 || result > math.MaxInt16 {
+			return newError("value %d out of bounds for i16", result)
+		}
 		return &object.Int16{Value: int16(result)}
 	case object.I32_OBJ:
+		if result < math.MinInt32 || result > math.MaxInt32 {
+			return newError("value %d out of bounds for i32", result)
+		}
 		return &object.Int32{Value: int32(result)}
 	case object.I64_OBJ:
 		return &object.Int64{Value: result}
@@ -457,6 +493,11 @@ func evalIntMath(operator string, leftVal, rightVal int64, targetType object.Obj
 
 // Evaluates infix expressions for unsigned integer types, performing arithmetic and comparison operations
 func evalUintMath(operator string, leftVal, rightVal uint64, targetType object.ObjectType) object.Object {
+	// FIX: Intercept unsigned underflow before Go panics or wraps around
+	if operator == "-" && leftVal < rightVal {
+		return newError("value %d out of bounds for %s", int64(leftVal)-int64(rightVal), targetType)
+	}
+
 	var result uint64
 	switch operator {
 	case "+":
@@ -491,12 +532,22 @@ func evalUintMath(operator string, leftVal, rightVal uint64, targetType object.O
 		return newError("unknown operator: %s %s %s", targetType, operator, targetType)
 	}
 
+	// FIX: Apply strict bounds checking to the calculated math result
 	switch targetType {
 	case object.U8_OBJ:
+		if result > math.MaxUint8 {
+			return newError("value %d out of bounds for u8", result)
+		}
 		return &object.Uint8{Value: uint8(result)}
 	case object.U16_OBJ:
+		if result > math.MaxUint16 {
+			return newError("value %d out of bounds for u16", result)
+		}
 		return &object.Uint16{Value: uint16(result)}
 	case object.U32_OBJ:
+		if result > math.MaxUint32 {
+			return newError("value %d out of bounds for u32", result)
+		}
 		return &object.Uint32{Value: uint32(result)}
 	case object.U64_OBJ:
 		return &object.Uint64{Value: result}
@@ -515,6 +566,9 @@ func evalFloatMath(operator string, leftVal, rightVal float64, targetType object
 	case "*":
 		result = leftVal * rightVal
 	case "/":
+		if rightVal == 0.0 {
+			return newError("division by zero")
+		}
 		result = leftVal / rightVal
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
@@ -532,8 +586,26 @@ func evalFloatMath(operator string, leftVal, rightVal float64, targetType object
 		return newError("unknown operator: %s %s %s", targetType, operator, targetType)
 	}
 
+	// FIX: Differentiate between positive overflow and negative overflow
+	if math.IsInf(result, 1) { // 1 checks specifically for +Inf
+		return newError("float calculation resulted in positive infinity (overflow)")
+	}
+	if math.IsInf(result, -1) { // -1 checks specifically for -Inf
+		return newError("float calculation resulted in negative infinity (negative overflow)")
+	}
+	if math.IsNaN(result) {
+		return newError("float calculation resulted in NaN (not a number)")
+	}
+
 	switch targetType {
 	case object.F32_OBJ:
+		// Catch bounds before casting down to f32
+		if result < -math.MaxFloat32 {
+			return newError("value out of bounds for f32 (negative overflow)")
+		}
+		if result > math.MaxFloat32 {
+			return newError("value out of bounds for f32 (overflow)")
+		}
 		return &object.Float32{Value: float32(result)}
 	case object.F64_OBJ:
 		return &object.Float64{Value: result}

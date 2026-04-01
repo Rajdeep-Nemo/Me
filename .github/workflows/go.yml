@@ -1,4 +1,4 @@
-name: Pluesi Go CI
+name: Sugarglaze Go CI
 
 on:
   push:

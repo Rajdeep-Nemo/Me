@@ -1,39 +1,48 @@
 # Sugarglaze
 
-Sugarglaze is a custom programming language interpreter implemented in Go.
+Sugarglaze is a minimalist programming language interpreter written in Go. Designed to do more with less — it strips away syntactic noise to deliver fast, clear, and expressive code.
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/Rajdeep-Nemo/sugarglaze
+cd sugarglaze
+go build ./cmd/glaze
+./glaze
+```
+
+For full build and test instructions, see [BUILD.md](BUILD.md).
 
 ---
 
 ## Overview
 
-A minimalist programming language written in Go, designed to do more with less code. Focused on simplicity and removing syntactic noise for fast, clear, and expressive code.
+Sugarglaze is built around a single principle: simplicity. It is a custom language interpreter implemented entirely in Go, with no external dependencies. The goal is a language that feels lightweight and intuitive, without sacrificing expressiveness.
 
 ---
 
-## Build
+## Roadmap
 
-See [BUILD.md](BUILD.md) for full instructions.
-
----
-
-## Contribution & Workflow
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+- [x] **Interpreter** — tree-walking interpreter (current phase)
+- [ ] **Virtual Machine** — bytecode compiler and stack-based VM
+- [ ] **Compiled** — native code generation
 
 ---
 
-## Security
+## Project Documentation
 
-See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+| Document | Description |
+|----------|-------------|
+| [BUILD.md](BUILD.md) | How to build, run, and test the project locally |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Branching strategy, workflow, and code style guidelines |
+| [SECURITY.md](SECURITY.md) | How to responsibly report a vulnerability |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards and expected behavior |
+| [CONTRIBUTORS.md](CONTRIBUTORS.md) | Everyone who has contributed to this project |
 
 ---
 
 ## License
 
-This project is licensed under [LICENSE](LICENSE).
-
----
-
-## Code of Conduct
-
-See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for expected behavior and community guidelines.
+This project is licensed under the terms described in [LICENSE](LICENSE).

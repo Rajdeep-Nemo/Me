@@ -1,55 +1,67 @@
 # Contributing
 
-Thanks for taking the time to contribute.
+We appreciate your interest in contributing. Please read through these guidelines to help keep the project consistent and the review process smooth.
 
-> ## Branching Strategy
-> To keep the project stable, we use two main branches:
-> - **`main`**: Contains stable, bug-free code that passes all tests.
-> - **`dev`**: Used for active development and testing.
->
-> **To contribute:** please create your own branch starting from **`dev`**. Once your code is ready, open a Pull Request to merge your changes back into `dev`. Thank you for your contributions!
+---
+
+## Branching Strategy
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Contains production-ready code that passes all tests. Do not branch from here. |
+| `dev`  | Active development happens here. Branch from `dev` and open a PR back into it. |
+
+---
 
 ## Workflow
 
-* Clone → branch → commit → pull request
-* Keep changes small and focused
+```
+Clone → Branch from dev → Commit → Pull request
+```
 
-## PR Rules
+Keep changes small and focused. One logical change per branch makes review faster and easier.
 
-* First line of PR title must start with:
+---
 
-  * `bug:`
-  * `feature:`
-  * `docs:`
-  * `refactor:`
-* Clearly state what changed and why
+## Commit & PR Prefixes
+
+All commits and PR titles must begin with one of the following prefixes:
+
+| Prefix | Use for |
+|--------|---------|
+| `bug:` | Defect fixes |
+| `feature:` | New functionality |
+| `docs:` | Documentation updates |
+| `refactor:` | Code restructuring |
+
+Use short, descriptive messages. Clearly describe what changed and why in the PR body.
+
+---
 
 ## Code Style
 
-* Follow standard Go naming conventions
-* Match existing code style
-* Prefer simple, readable code over cleverness
+- Follow standard Go naming conventions.
+- Match the style of surrounding code.
+- Prefer simple, readable code over clever solutions.
+- Use only the Go standard library — this project is intentionally self-contained and does not use external dependencies.
 
-## Commits
-* Prefix with:
-
-  * `bug:`
-  * `feature:`
-  * `docs:`
-  * `refactor:`
-* Use short, descriptive messages
-* One logical change per commit
+---
 
 ## Tests & Docs
 
-* Add or update test cases for changes
-* Update relevant documentation if needed
+- Add or update tests for every change.
+- Update relevant documentation alongside code changes.
+
+---
+
+## Before Submitting
+
+- Verify the project builds cleanly.
+- Avoid introducing new dependencies.
+- Clearly describe what changed and why in the PR.
+
+---
 
 ## Contributors
 
-Add yourself to [CONTRIBUTORS.md](CONTRIBUTORS.md)
-
-## Notes
-
-* Ensure the project builds before submitting
-* Avoid unnecessary dependencies
+Once your PR is merged, add your name to [CONTRIBUTORS.md](CONTRIBUTORS.md).

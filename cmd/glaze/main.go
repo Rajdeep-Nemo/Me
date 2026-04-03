@@ -56,7 +56,6 @@ func main() {
 	}
 
 	// EVALUATING (AST -> Execution)
-
 	env := object.NewEnvironment()
 	result := evaluator.Eval(program, env)
 

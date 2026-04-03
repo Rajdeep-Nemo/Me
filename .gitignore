@@ -37,4 +37,4 @@ go.work.sum
 # Test file
 test
 .vscode/settings.json
-cmd/glaze/test.sz
+cmd/glaze/test

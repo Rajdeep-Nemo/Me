@@ -30,26 +30,19 @@ func main() {
 	}
 	source := string(data)
 
-	// ==========================================
-	// 1. LEXING (Text -> Tokens)
-	// ==========================================
+	// LEXING (Text -> Tokens)
 	s := lexer.InitScanner(source)
 
 	var tokens []token.Token
 	for {
-		// NOTE: Change `NextToken()` to whatever your lexer uses to get the next token
 		tok := s.ScanToken()
 		tokens = append(tokens, tok)
-
-		// NOTE: Change `token.EOF` if your end-of-file constant is named differently
 		if tok.Type == token.END_OF_FILE {
 			break
 		}
 	}
 
-	// ==========================================
-	// 2. PARSING (Tokens -> AST)
-	// ==========================================
+	// PARSING (Tokens -> AST)
 	p := parser.New(tokens)
 	program := p.ParseProgram()
 
@@ -62,9 +55,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// ==========================================
-	// 3. EVALUATING (AST -> Execution)
-	// ==========================================
+	// EVALUATING (AST -> Execution)
+
 	env := object.NewEnvironment()
 	result := evaluator.Eval(program, env)
 

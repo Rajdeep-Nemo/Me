@@ -9,8 +9,10 @@ import (
 // builtins is the central registry of all native functions.
 // The string keys to the separate logic functions defined in other files.
 var builtins = map[string]*object.Builtin{
+	// Output functions
 	"print":   {Fn: builtinPrint},
 	"println": {Fn: builtinPrintln},
+	// Input functions
 
 	// We can leave 'len' here for now, or you can move it to a builtin_string.go later!
 	"len": {

@@ -93,3 +93,8 @@ func builtinPrintln(args ...object.Object) object.Object {
 	fmt.Println(output)
 	return &object.Nil{}
 }
+
+// Trims leading and trailing whitespace from a string
+func trim(s string) string {
+	return strings.TrimSpace(s)
+}

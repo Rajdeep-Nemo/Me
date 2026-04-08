@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
@@ -104,8 +105,8 @@ func trim(s string) string {
 // A shared buffered reader for os.Stdin.
 var reader = bufio.NewReader(os.Stdin)
 
-// InputStr reads a line from stdin with an optional prompt.
-func InputStr(prompt string) string {
+// Input reads a line from stdin with an optional prompt.
+func Input(prompt string) string {
 	if prompt != "" {
 		fmt.Print(prompt)
 	}
@@ -115,40 +116,4 @@ func InputStr(prompt string) string {
 		os.Exit(1)
 	}
 	return strings.TrimRight(line, "\r\n")
-}
-
-// InputChar reads a single character from stdin with an optional prompt.
-func InputChar(prompt string) byte {
-	line := InputStr(prompt)
-	if line == "" {
-		fmt.Fprintln(os.Stderr, "Empty input.")
-		os.Exit(1)
-	}
-	if len(line) > 1 {
-		fmt.Fprintln(os.Stderr, "Multiple characters found.")
-		os.Exit(1)
-	}
-	return line[0]
-}
-
-// InputBool reads a boolean value from stdin with an optional prompt (true/false).
-func InputBool(prompt string) bool {
-	line := trim(InputStr(prompt))
-	if line == "" {
-		fmt.Fprintln(os.Stderr, "Empty input.")
-		os.Exit(1)
-	}
-	if len(line) > 5 {
-		fmt.Fprintf(os.Stderr, "Invalid value: '%s', value accepted: true / false\n", line)
-		os.Exit(1)
-	}
-	if line == "true" {
-		return true
-	}
-	if line == "false" {
-		return false
-	}
-	fmt.Fprintf(os.Stderr, "Invalid value: '%s', value accepted: true / false\n", line)
-	os.Exit(1)
-	return false
 }

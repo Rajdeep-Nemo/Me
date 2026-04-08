@@ -204,3 +204,34 @@ func MustParseU8(s string) uint8 {
 	}
 	return *v
 }
+
+// ParseU16 parses a string to a 16-bit unsigned integer.
+// Returns nil if parsing fails.
+func ParseU16(s string) *uint16 {
+	s = trim(s)
+	if s == "" {
+		return nil
+	}
+	v, err := strconv.ParseUint(s, 10, 16)
+	if err != nil {
+		return nil
+	}
+	val := uint16(v)
+	return &val
+}
+
+// MustParseU16 parses a string to a 16-bit unsigned integer.
+// Exits with an error message if parsing fails.
+func MustParseU16(s string) uint16 {
+	s = trim(s)
+	if s == "" {
+		fmt.Fprintln(os.Stderr, "Empty input.")
+		os.Exit(1)
+	}
+	v := ParseU16(s)
+	if v == nil {
+		fmt.Fprintf(os.Stderr, "Invalid input: '%s' is not a valid 16-bit unsigned integer.\n", s)
+		os.Exit(1)
+	}
+	return *v
+}

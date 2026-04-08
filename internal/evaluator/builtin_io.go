@@ -266,3 +266,34 @@ func MustParseU32(s string) uint32 {
 	}
 	return *v
 }
+
+// ParseU64 parses a string to a 64-bit unsigned integer.
+// Returns nil if parsing fails.
+func ParseU64(s string) *uint64 {
+	s = trim(s)
+	if s == "" {
+		return nil
+	}
+	v, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return nil
+	}
+	val := uint64(v)
+	return &val
+}
+
+// MustParseU64 parses a string to a 64-bit unsigned integer.
+// Exits with an error message if parsing fails.
+func MustParseU64(s string) uint64 {
+	s = trim(s)
+	if s == "" {
+		fmt.Fprintln(os.Stderr, "Empty input.")
+		os.Exit(1)
+	}
+	v := ParseU64(s)
+	if v == nil {
+		fmt.Fprintf(os.Stderr, "Invalid input: '%s' is not a valid 64-bit unsigned integer.\n", s)
+		os.Exit(1)
+	}
+	return *v
+}

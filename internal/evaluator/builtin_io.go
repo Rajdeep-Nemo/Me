@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
@@ -116,4 +115,30 @@ func Input(prompt string) string {
 		os.Exit(1)
 	}
 	return strings.TrimRight(line, "\r\n")
+}
+
+// Parses a string to a boolean value.
+// Returns nil if parsing fails.
+func ParseBool(s string) *bool {
+	s = trim(s)
+	if s == "true" {
+		v := true
+		return &v
+	}
+	if s == "false" {
+		v := false
+		return &v
+	}
+	return nil
+}
+
+// Parses a string to a boolean value.
+// Exits with an error message if parsing fails.
+func MustParseBool(s string) bool {
+	v := ParseBool(s)
+	if v == nil {
+		fmt.Fprintf(os.Stderr, "Invalid value: '%s', value accepted: true / false\n", s)
+		os.Exit(1)
+	}
+	return *v
 }

@@ -90,7 +90,7 @@ func (s *String) Inspect() string  { return s.Value }
 
 type Char struct{ Value rune }
 
-func (c *Char) Type() ObjectType { return STRING_OBJ }
+func (c *Char) Type() ObjectType { return CHAR_OBJ }
 func (c *Char) Inspect() string  { return string(c.Value) }
 
 type Error struct{ Message string }

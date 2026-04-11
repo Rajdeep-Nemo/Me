@@ -370,6 +370,20 @@ func (p *Parser) registerParseFns() {
 		token.MINUS:          p.parsePrefixExpression,
 		token.OPEN_PAREN:     p.parseGroupedExpression,
 		token.IF:             p.parseIfExpression,
+		// Type keywords
+		token.CHAR:   p.parseIdentifier,
+		token.STRING: p.parseIdentifier,
+		token.BOOL:   p.parseIdentifier,
+		token.U8:     p.parseIdentifier,
+		token.U16:    p.parseIdentifier,
+		token.U32:    p.parseIdentifier,
+		token.U64:    p.parseIdentifier,
+		token.I8:     p.parseIdentifier,
+		token.I16:    p.parseIdentifier,
+		token.I32:    p.parseIdentifier,
+		token.I64:    p.parseIdentifier,
+		token.F32:    p.parseIdentifier,
+		token.F64:    p.parseIdentifier,
 	}
 	// Infix functions
 	infixParseFns = map[token.TokenType]infixParseFn{

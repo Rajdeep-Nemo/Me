@@ -520,3 +520,125 @@ func MustParseF64(s string) float64 {
 	}
 	return *v
 }
+
+// builtinParse attempts to convert a string to a specified type, returning object.Null if parsing fails.
+func builtinParse(args ...object.Object) object.Object {
+	if len(args) != 2 {
+		return &object.Error{Message: fmt.Sprintf("expected 2 arguments for parse(), got %d", len(args))}
+	}
+
+	typeArg, ok1 := args[0].(*object.String)
+	valArg, ok2 := args[1].(*object.String)
+
+	if !ok1 && !ok2 {
+		return &object.Error{Message: fmt.Sprintf("expected a type as the first argument and a string as the second argument, got values of '%s' and '%s'", args[0].Type(), args[1].Type())}
+	}
+	if !ok1 {
+		return &object.Error{Message: fmt.Sprintf("expected a type as the first argument, got value of '%s'", args[0].Type())}
+	}
+	if !ok2 {
+		return &object.Error{Message: fmt.Sprintf("expected a string as the second argument, got value of '%s'", args[1].Type())}
+	}
+
+	switch typeArg.Value {
+	case "bool":
+		result := ParseBool(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Boolean{Value: *result}
+	case "u8":
+		result := ParseU8(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Uint8{Value: *result}
+	case "u16":
+		result := ParseU16(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Uint16{Value: *result}
+	case "u32":
+		result := ParseU32(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Uint32{Value: *result}
+	case "u64":
+		result := ParseU64(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Uint64{Value: *result}
+	case "i8":
+		result := ParseI8(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Int8{Value: *result}
+	case "i16":
+		result := ParseI16(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Int16{Value: *result}
+	case "i32":
+		result := ParseI32(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Int32{Value: *result}
+	case "i64":
+		result := ParseI64(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Int64{Value: *result}
+	case "f32":
+		result := ParseF32(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Float32{Value: *result}
+	case "f64":
+		result := ParseF64(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Float64{Value: *result}
+	case "char":
+		result := ParseChar(valArg.Value)
+		if result == nil {
+			return &object.Nil{}
+		}
+		return &object.Char{Value: rune(*result)}
+	default:
+		return &object.Error{Message: fmt.Sprintf("unknown parse type: '%s'", typeArg.Value)}
+	}
+}
+
+// builtinParseBang converts a string to a specified type, using native Must- functions to crash on failure.
+func builtinParseBang(args ...object.Object) object.Object {
+	if len(args) != 2 {
+		return &object.Error{Message: fmt.Sprintf("expected 2 arguments for parse!(), got %d", len(args))}
+	}
+
+	typeArg, ok1 := args[0].(*object.String)
+	valArg, ok2 := args[1].(*object.String)
+
+	if !ok1 {
+		return &object.Error{Message: fmt.Sprintf("expected a type as the first argument, got value of '%s'", args[0].Type())}
+	}
+	if !ok2 {
+		return &object.Error{Message: fmt.Sprintf("expected a string as the second argument, got value of '%s'", args[1].Type())}
+	}
+
+	switch typeArg.Value {
+	case "bool":
+		result := MustParseBool(valArg.Value)
+		return &object.Boolean{Value: result}
+	default:
+		return &object.Error{Message: fmt.Sprintf("unknown parse! type: '%s'", typeArg.Value)}
+	}
+}

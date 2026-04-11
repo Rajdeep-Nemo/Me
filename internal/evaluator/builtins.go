@@ -15,10 +15,10 @@ var builtins = map[string]*object.Builtin{
 	// Input functions
 	"input": {Fn: builtinInput},
 	// Parse functions
-	"parse": {Fn: builtinParse},
+	"parse":  {Fn: builtinParse},
 	"parse!": {Fn: builtinParseBang},
 	// Extra functions
-	"trim":  {Fn: builtinTrim},
+	"trim": {Fn: builtinTrim},
 	"len": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
